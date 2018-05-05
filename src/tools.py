@@ -2,6 +2,7 @@ import scipy.misc as sm
 import numpy as np
 import PIL
 
+
 def load_image(path, given_size=None):
     image = PIL.Image.open(path)
     np_img = np.float32(image)
@@ -10,6 +11,7 @@ def load_image(path, given_size=None):
         np_img = sm.imresize(np_img, given_size)
 
     return np_img
+
 
 def save_image(path, given_image):
     image = np.clip(given_image, 0, 255)
