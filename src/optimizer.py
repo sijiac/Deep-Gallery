@@ -1,12 +1,15 @@
 import tensorflow as tf
 import vgg
-import generate_net
+import genr_net
 import functools
 import numpy as np
+import os
 from tools import load_image
 
 STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
 CONTENT_LAYER = 'relu4_2'
+
+SAVE_PERIOD = 500
 
 def _vggnet(data_path, input_image):
     weights, mean_pixel = vgg.load_net(data_path)
@@ -23,10 +26,10 @@ def create_content_loss(sess, batch_content_shape, vgg_path, batch_size):
         X_content = tf.placeholder(tf.float32, shape=batch_content_shape, name="X_content")
         content_net = _vggnet(vgg_path, X_content)
 
-        X_generated = generate_net.net(X_content/255.0)
+        X_generated = genr_net.net(X_content/255.0)
         generated_net = _vggnet(vgg_path, X_generated)
 
-        loss = tf.nn.l2_loss(generate_net[CONTENT_LAYER] - content_net[CONTENT_LAYER])
+        loss = tf.nn.l2_loss(genr_net[CONTENT_LAYER] - content_net[CONTENT_LAYER])
         content_size = _tensor_size(content_net[CONTENT_LAYER]) * batch_size
     return loss, generated_net, X_content
 
@@ -72,8 +75,8 @@ def _target_grams(vgg_path, style_image):
     return style_grams
 
 
-def optimizer(content_images, style_image, content_weight, style_weight, denoise_weight,
-              vgg_path, numOfEpochs=2, batch_size=4, alpha=1e-3):
+def optimize(content_images, style_image, content_weight, style_weight, denoise_weight,
+              vgg_path, ck_dir, batch_size=4, alpha=1e-3):
 
     mod = len(content_images) % batch_size
     if mod > 0:
@@ -88,7 +91,7 @@ def optimizer(content_images, style_image, content_weight, style_weight, denoise
         style_loss = create_style_loss(sess, genrd_net, batch_size)
         denoise_loss = create_denoise_loss(sess, genrd_net, batch_content_shape, batch_size)
 
-        total_loss = content_weight * content_loss + style_weight * style_loss + denoise_loss * denoise_loss
+        total_loss = content_weight * content_loss + style_weight * style_loss + denoise_weight * denoise_loss
         my_optimizer = tf.train.AdamOptimizer(alpha).minimize(total_loss)
         sess.run(tf.global_variables_initializer())
 
@@ -101,3 +104,10 @@ def optimizer(content_images, style_image, content_weight, style_weight, denoise
             X_batch = np.array(X_batch)
             my_optimizer.run(feed_dict={X_content:X_batch})
             cur_iter += 1
+
+            st_idx += batch_size
+            ed_idx += batch_size
+
+            if not cur_iter % SAVE_PERIOD:
+                file_name = "model_{}.ckpt".format(cur_iter)
+                tf.train.Saver().save(sess, os.path.join(ck_dir, file_name))
