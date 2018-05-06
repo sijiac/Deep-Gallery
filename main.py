@@ -21,7 +21,7 @@ LOG_PATH = UUID_PRFIX + '/log.txt'
 
 # tranfer() needed
 CONTENT_PATH = './input/small_artist.jpeg'
-MODEL_PATH = './604747ae/ck_dir/model_140.ckpt'
+MODEL_PATH = './8ca14295/ck_dir/model_2500.ckpt'
 GENRD_PATH = './output/small_artist.jpeg'
 
 
@@ -82,14 +82,15 @@ def build_model():
     new_style.train()
 
 
-def transfer():
+def transfer(reserve=False):
     if not os.path.isfile(CONTENT_PATH):
         raise ValueError(CONTENT_PATH + " doesn't exist.")
 
     content_image = load_image(CONTENT_PATH)
     neural_transfer.transfer(content_image=content_image,
                              output_path=GENRD_PATH,
-                             model_path=MODEL_PATH)
+                             model_path=MODEL_PATH,
+                             reserve_color=reserve)
 
 
 if __name__ == "__main__":
@@ -100,10 +101,15 @@ if __name__ == "__main__":
                         help="transfer or train",
                         metavar='FUNC',
                         required=True)
+    parser.add_argument('--reserve',
+                        dest='reserve',
+                        action='store_true',
+                        help="means reserve original color",
+                        default=False)
     opts = parser.parse_args()
 
     if opts.func == 'transfer':
-        transfer()
+        transfer(reserve=opts.reserve)
     elif opts.func == 'train':
         print("uuid: {}".format(UUID))
         build_model()

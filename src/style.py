@@ -29,6 +29,7 @@ def gram_matrix(tensor):
     gram = tf.matmul(matrixT, matrix) / single_size
     return gram
 
+
 def _tensor_size(tensor):
     from operator import mul
     return functools.reduce(mul, (d.value for d in tensor.get_shape()[1:]), 1)

@@ -5,11 +5,13 @@ import vgg
 import scipy.misc
 import tensorflow as tf
 from tools import load_image, save_image
+from preserve import preserve_lab
+import scipy.misc as sm
 
 DEVICE_ID = '/gpu:0'
 
 
-def transfer(content_image, output_path, model_path):
+def transfer(content_image, output_path, model_path, reserve_color=False):
     """
 
     :param content_image: height * weight * channel
@@ -37,4 +39,8 @@ def transfer(content_image, output_path, model_path):
 
         _X_content = np.array([content_image])
         genrd_image = sess.run(_genr, feed_dict={X_content:_X_content})[0]
+        if reserve_color:
+            content_image = sm.imresize(content_image, genrd_image.shape)
+            print content_image.shape, genrd_image.shape
+            genrd_image = preserve_lab(content_image, genrd_image)
         save_image(output_path, genrd_image)

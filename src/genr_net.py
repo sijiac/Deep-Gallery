@@ -1,6 +1,10 @@
+# refer https://github.com/lengstrom/fast-style-transfer/blob/master/src/transform.py
+# function: construct a generate network
+
 import tensorflow as tf, pdb
 
 WEIGHTS_INIT_STDEV = .1
+
 
 def net(image):
     conv1 = _conv_layer(image, 32, 9, 1)
@@ -28,6 +32,7 @@ def _conv_layer(net, num_filters, filter_size, strides, relu=True):
 
     return net
 
+
 def _conv_tranpose_layer(net, num_filters, filter_size, strides):
     weights_init = _conv_init_vars(net, num_filters, filter_size, transpose=True)
 
@@ -46,6 +51,15 @@ def _conv_tranpose_layer(net, num_filters, filter_size, strides):
 def _residual_block(net, filter_size=3):
     tmp = _conv_layer(net, 128, filter_size, 1)
     return net + _conv_layer(tmp, 128, filter_size, 1, relu=False)
+
+def _batch_norm(x, train=True):
+    batch, rows, cols, channels = [i.value for i in x.get_shape()]
+    batch_mean, batch_var = tf.nn.moments(x, [0, 1, 2], name='moments')
+    shift = tf.Variable(tf.zeros([channels]))
+    scale = tf.Variable(tf.ones([channels]))
+
+    normed = tf.nn.batch_normalization(x, batch_mean, variance=batch_var, offset=shift, scale=scale, variance_epsilon=1e-3)
+    return normed
 
 def _instance_norm(net, train=True):
     batch, rows, cols, channels = [i.value for i in net.get_shape()]
