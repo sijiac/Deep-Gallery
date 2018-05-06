@@ -2,7 +2,7 @@ import sys, os, shutil
 sys.path.insert(0, "src")
 from tools import load_image
 from argparse import ArgumentParser
-import optimizer
+from style import Style
 import neural_transfer
 import numpy as np, scipy.misc
 import uuid
@@ -67,11 +67,11 @@ def build_model():
         break
     files = [os.path.join(DATA_PATH, x) for x in files]
 
-    optimizer.optimize(content_images=files,
+    new_style = Style(content_images=files,
                        style_image=style_image,
-                       content_weight=7.5,
-                       style_weight=100,
-                       denoise_weight=200,
+                       content_weight=0.3,
+                       style_weight=0.3,
+                       denoise_weight=0.3,
                        vgg_path=VGG_PATH,
                        ck_dir=CHECKPOINT_DIR,
                        test_image=test_image,
@@ -79,6 +79,7 @@ def build_model():
                        log_path=LOG_PATH,
                        batch_size=4,
                        alpha=1e-3)
+    new_style.train()
 
 
 def transfer():
