@@ -1,5 +1,5 @@
 import sys, os, shutil
-sys.path.append('src')
+sys.path.insert(0, "src")
 from tools import load_image
 from argparse import ArgumentParser
 import optimizer
@@ -7,31 +7,39 @@ import neural_transfer
 import numpy as np, scipy.misc
 import uuid
 
-
-UUID_PRFIX = uuid.uuid4().hex[:8]
-CHECKPOINT_DIR = './' + UUID_PRFIX + '_ck'
-OUTPUT_DIR = './' + UUID_PRFIX + '_output'
-DATA_PATH = './train2014'
+UUID = uuid.uuid4().hex[:8]
+UUID_PRFIX = './' + UUID
+CHECKPOINT_DIR = UUID_PRFIX + '/ck_dir'
+OUTPUT_DIR = UUID_PRFIX + '/output'
+DATA_PATH = './val2017'
 VGG_PATH = './imagenet-vgg-verydeep-19.mat'
 
+# build_model() needed
+STYLE_PATH = './wave.jpg'
+TEST_PATH = './small_artist.jpeg'
+LOG_PATH = UUID_PRFIX + '/log.txt'
 
-STYLE_PATH = './wave.jpeg'
-TEST_PATH = './artist.jpeg'
-
-
+# tranfer() needed
 CONTENT_PATH = './input/small_artist.jpeg'
-MODEL_PATH = './wave.ckt'
+MODEL_PATH = './604747ae/ck_dir/model_140.ckpt'
 GENRD_PATH = './output/small_artist.jpeg'
 
 
 def build_model():
 
+    if os.path.exists(UUID_PRFIX):
+        shutil.rmtree(UUID_PRFIX)
+    os.makedirs(UUID_PRFIX)
     if os.path.exists(CHECKPOINT_DIR):
         shutil.rmtree(CHECKPOINT_DIR)
-    os.mkdirs(CHECKPOINT_DIR)
+    os.makedirs(CHECKPOINT_DIR)
     if os.path.exists(OUTPUT_DIR):
         shutil.rmtree(OUTPUT_DIR)
-    os.mkdirs(OUTPUT_DIR)
+    os.makedirs(OUTPUT_DIR)
+    if os.path.isfile(LOG_PATH):
+        os.remove(LOG_PATH)
+    with open(LOG_PATH, 'w') as f:
+        pass
 
     # Check directory path
     if not os.path.isdir(CHECKPOINT_DIR):
@@ -50,6 +58,7 @@ def build_model():
         raise ValueError(TEST_PATH + " doesn't exist.")
 
     style_image = load_image(STYLE_PATH)
+    test_image = load_image(TEST_PATH, (256,256))
 
     # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
     files = []
@@ -64,18 +73,21 @@ def build_model():
                        style_weight=100,
                        denoise_weight=200,
                        vgg_path=VGG_PATH,
+                       ck_dir=CHECKPOINT_DIR,
+                       test_image=test_image,
+                       test_out_dir=OUTPUT_DIR,
+                       log_path=LOG_PATH,
                        batch_size=4,
-                       alpha=1e-3,
-                       ck_dir=CHECKPOINT_DIR)
+                       alpha=1e-3)
 
 
 def transfer():
     if not os.path.isfile(CONTENT_PATH):
-        raise ValueError(CONTENT_PATH + "")
+        raise ValueError(CONTENT_PATH + " doesn't exist.")
 
     content_image = load_image(CONTENT_PATH)
     neural_transfer.transfer(content_image=content_image,
-                             output_path=OUTPUT_DIR,
+                             output_path=GENRD_PATH,
                              model_path=MODEL_PATH)
 
 
@@ -92,6 +104,7 @@ if __name__ == "__main__":
     if opts.func == 'transfer':
         transfer()
     elif opts.func == 'train':
+        print("uuid: {}".format(UUID))
         build_model()
     else:
         raise ValueError("--function " + opts.func + " not found!")

@@ -17,6 +17,7 @@ def net(image):
     preds = tf.nn.tanh(conv_t3) * 150 + 255./2
     return preds
 
+
 def _conv_layer(net, num_filters, filter_size, strides, relu=True):
     weights_init = _conv_init_vars(net, num_filters, filter_size)
     strides_shape = [1, strides, strides, 1]

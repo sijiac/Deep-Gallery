@@ -19,10 +19,9 @@ def transfer(content_image, output_path, model_path):
     :return:
     """
 
-    if not os.path.isdir(output_path):
-        raise ValueError(output_path + " doesn't exist.")
-    if not os.path.isfile(model_path):
-        raise ValueError(model_path + " doesn't exist.")
+    # make sure content_image: w * h * channels
+
+    assert len(content_image.shape) == 3
 
     g = tf.Graph()
     tf_config = tf.ConfigProto(allow_soft_placement=True)
@@ -34,7 +33,8 @@ def transfer(content_image, output_path, model_path):
         X_content = tf.placeholder(tf.float32, shape=batch_content_shape, name='transfer_X_content')
         _genr = genr_net.net(X_content)
 
-        tf.train.Saver.restore(sess, model_path)
+        tf.train.Saver().restore(sess, model_path)
 
-        genrd_image = sess.run(_genr, feed_dict={X_content:content_image})[0]
+        _X_content = np.array([content_image])
+        genrd_image = sess.run(_genr, feed_dict={X_content:_X_content})[0]
         save_image(output_path, genrd_image)
