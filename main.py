@@ -69,15 +69,15 @@ def build_model():
 
     new_style = Style(content_images=files,
                        style_image=style_image,
-                       content_weight=0.3,
-                       style_weight=0.3,
-                       denoise_weight=0.3,
+                       content_weight=7.5,
+                       style_weight=100,
+                       denoise_weight=100,
                        vgg_path=VGG_PATH,
                        ck_dir=CHECKPOINT_DIR,
                        test_image=test_image,
                        test_out_dir=OUTPUT_DIR,
                        log_path=LOG_PATH,
-                       batch_size=4,
+                       batch_size=32,
                        alpha=1e-3)
     new_style.train()
 
