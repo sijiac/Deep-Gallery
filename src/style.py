@@ -30,11 +30,6 @@ def gram_matrix(tensor):
     return gram
 
 
-def _tensor_size(tensor):
-    from operator import mul
-    return functools.reduce(mul, (d.value for d in tensor.get_shape()[1:]), 1)
-
-
 def _target_grams(vgg_path, style_image):
     style_grams = {}
     style_shape = (1,) + style_image.shape
@@ -90,7 +85,6 @@ class Style(object):
         genrAndvgg_net = _vggnet(self.vgg_path, _genr_net)
 
         loss = self.ct_weight * tf.nn.l2_loss(genrAndvgg_net[CONTENT_LAYER] - content_net[CONTENT_LAYER]) / self.batch_size
-        content_size = _tensor_size(content_net[CONTENT_LAYER]) * self.batch_size
         return loss, genrAndvgg_net, _genr_net, x_content
 
     def create_style_loss(self, genrAndvgg_net, style_target_grams):
